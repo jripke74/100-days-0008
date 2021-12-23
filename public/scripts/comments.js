@@ -24,15 +24,24 @@ function createCommentsList(comments) {
 async function fetchCommentsForPost() {
   const postId = loadCommentsBtnElement.dataset.postid;
   const response = await fetch(`/posts/${postId}/comments`);
-  const responseData = await response.json();
+  try {
+    if (!response.ok) {
+      alert("Feteching comments failed!");
+      return;
+    }
 
-  if (responseData && responseData.length > 0) {
-    const commentsListElement = createCommentsList(responseData);
-    commentSectionElement.innerHTML = "";
-    commentSectionElement.appendChild(commentsListElement);
-  } else {
-    commentSectionElement.firstElementChild.textContent =
-      "We could not find any comments. Maybe add one?";
+    const responseData = await response.json();
+
+    if (responseData && responseData.length > 0) {
+      const commentsListElement = createCommentsList(responseData);
+      commentSectionElement.innerHTML = "";
+      commentSectionElement.appendChild(commentsListElement);
+    } else {
+      commentSectionElement.firstElementChild.textContent =
+        "We could not find any comments. Maybe add one?";
+    }
+  } catch (error) {
+    alert("Getting comments failed!");
   }
 }
 
@@ -45,15 +54,22 @@ async function saveComment(event) {
 
   const comment = { title: enteredTitle, text: enteredText };
 
-  const response = await fetch(`/posts/${postId}/comments`, {
-    method: "POST",
-    body: JSON.stringify(comment),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  fetchCommentsForPost();
+  try {
+    const response = await fetch(`/posts/${postId}/comments`, {
+      method: "POST",
+      body: JSON.stringify(comment),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (response.ok) {
+      fetchCommentsForPost();
+    } else {
+      alert("Could not send comment!");
+    }
+  } catch (error) {
+    alert("Could not send request - maybe try again later!");
+  }
 }
 
 loadCommentsBtnElement.addEventListener("click", fetchCommentsForPost);
